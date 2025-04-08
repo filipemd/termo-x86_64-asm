@@ -24,9 +24,9 @@ section .rodata
     initial_text:  
         db 'Bem vindo ao termo! Você vai ter que adivinhar uma palavra de 5 letras. Ela não vai ter acento, então, por exemplo, a palavra "porém" vai ficar "porem".', 10
         db 'Quando você dar o palpite de uma palavra, o jogo vai te dar dicas de onde cada letra está na palavra correta:', 10
-        db '_ = a letra não está na palavra - O = a letra está na palavra, mas não nessa posição - X = a letra está nessa exata posição', 10
+        db '_ = a letra não está na palavra - 0 = a letra está na palavra, mas não nessa posição - <letra correta> = a letra está nessa exata posição', 10
         db 'Por exemplo, vamos supor que a palavra correta é "MANGA" e o jogador deu o palpite de "PLENA", o jogo vai mostrar para o jogador:', 10
-        db '___OX', 10
+        db '___0A', 10
         db 'Porque N faz parte de MANGA, só que não na mesma posição de PLENA, e A faz parte de MANGA na mesma posição de PLENA', 10, 10
         db 'Você terá seis tentativas. Boa sorte!', 10, 0
 
@@ -41,8 +41,7 @@ section .rodata
     game_over_text: db 'Você perdeu!', 10, 0
     game_over_text_size: equ $-game_over_text
 
-    O: db 'O'
-    X: db 'X'
+    O: db '0'
     _: db '_'
     linebreak: db 10
 
@@ -80,7 +79,7 @@ _start:
     syscall  
 
     ; Para debug apenas
-    ; mov byte [random_number], 0
+     mov byte [random_number], 0
 
     ; O número está entre 0-255, mas ele tem que estar entre 0-<WORD_AMOUNT>
     mov al, byte [random_number] ; Coloca o número aleatório em AL
@@ -259,7 +258,7 @@ print_string_similarities:
 
 .search_loop:
     cmp byte[r13+r9], al ; Vê se o valor do caracter no loop é igual a palavra
-    je .print_O
+    je .print_0
 
     inc r9
     cmp r9, r14 ; Vê se o loop chegou ao fim
@@ -267,16 +266,22 @@ print_string_similarities:
 
     jmp .print_ ; Se, em todo o loop, não foi encontrada a letra, mostra um underline
 
+; Se chama assim por motivos históricos
 .print_X:
+    sub rsp, 1 ; Reserva 1 byte de espaço na stack
+    mov byte [rsp], al ; Coloca o valor de AL (a letra em que a posição foi acertada)
+
     ; sys_write(unsigned int fd, char *buf, size_t count)
     mov rax, 1
     mov rdi, 1
-    mov rsi, X
+    mov rsi, rsp ; Imprime o caracter
     mov rdx, 1
     syscall
+
+    add rsp, 1 ; Limpa a stack
     jmp .next
 
-.print_O:
+.print_0:
     ; sys_write(unsigned int fd, char *buf, size_t count)
     mov rax, 1
     mov rdi, 1
