@@ -79,7 +79,7 @@ _start:
     syscall  
 
     ; Para debug apenas
-     mov byte [random_number], 0
+    ; mov byte [random_number], 0
 
     ; O número está entre 0-255, mas ele tem que estar entre 0-<WORD_AMOUNT>
     mov al, byte [random_number] ; Coloca o número aleatório em AL
